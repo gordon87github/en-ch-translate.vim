@@ -5,17 +5,46 @@ exec g:python_vim_cmd . 'cwd = vim.eval("expand(\"<sfile>:p:h\")")'
 exec g:python_vim_cmd . 'sys.path.insert(0,cwd)'
 exec g:python_vim_cmd . 'from TranslateUtil import search'
 
-function! search#SearchExplain(word)
-	exec g:python_vim_cmd . 'search.searchExplain()'
+function! s:SearchExplainByPython(words)
+	exec g:python_vim_cmd . 'search.searchExplainByPython()'
 endfunction
 
-function! search#SearchExplainAction(type)
+function! search#SearchExplain(type,...)
 	if a:0
-		execute "normal! gvy"
+		silent execute "normal! gvy"
 	elseif a:type == "line"
-		execute "normal! '[V']y"
+		silent execute "normal! '[V']y"
 	else
-		execute "normal! `[v`]y"
+		silent execute "normal! `[v`]y"
 	endif
-	echom @@
+	call <SID>SearchExplainByPython(@@)
+endfunction
+
+function! s:WindowConfig()
+	setl filetype=explain
+	setl buftype=nofile
+	setl bufhidden=hide
+	setl noswapfile
+	setl noreadonly
+	setl nomodifiable
+	setl nobuflisted
+	setl nolist
+	nnoremap <silent><buffer> q :close<CR>:call <SID>GoToLastWind()<CR>
+endfunction
+
+function! s:GoToLastWind()
+	let cw=bufwinnr(g:lastbufName)
+	execute cw . " wincmd w" 
+endfunction
+
+function! search#GetExplainWindowID()
+	let g:lastbufName=bufname("%")
+	let cwin=bufwinnr("__ExplainWindow__")
+	if cwin == -1
+		silent keepalt bo split __ExplainWindow__
+		call s:WindowConfig()
+		return winnr()
+	else
+		return cwin
+	endif
 endfunction
